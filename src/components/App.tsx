@@ -10,12 +10,14 @@ const App: React.FC = () => {
   const [results, setResults] = useState<{
     totalLines: number
     totalFiles: number
+    totalComments: number
     languageBreakdown: Record<string, number>
     fileDetails: {
       name: string
       lines: number | null
       complexity: number | null
-      type: 'code' | 'binary'
+      type: 'code'
+      complexFunctionName?: string
     }[]
   } | null>(null)
 
@@ -152,9 +154,10 @@ const App: React.FC = () => {
     })
   }
 
-  const handleAnalysis = (files: FileList) => {
-    const fileDetails: { name: string; lines: number | null; complexity: number | null; type: 'code' }[] = []
+  const handleAnalysis = (files: FileList, options: AnalysisOptions) => {
+    const fileDetails: { name: string; lines: number | null; complexity: number | null; type: 'code'; complexFunctionName?: string }[] = []
     let totalLines = 0
+    let totalComments = 0
     const languageBreakdown: Record<string, number> = {}
     let processedCount = 0
 
@@ -168,6 +171,7 @@ const App: React.FC = () => {
       setResults({
         totalLines: 0,
         totalFiles: 0,
+        totalComments: 0,
         languageBreakdown: {},
         fileDetails: [],
       })
@@ -178,23 +182,56 @@ const App: React.FC = () => {
       const reader = new FileReader()
       const extension = file.name.split('.').pop()?.toLowerCase() || 'unknown'
 
-      // Processa apenas arquivos de código
       reader.onload = (event) => {
         try {
           const content = event.target?.result as string
           const lines = content.split('\n').length
-          totalLines += lines
+
+          // Contar comentários
+          const commentLines = content.split('\n').filter(line => {
+            const trimmedLine = line.trim()
+            return (
+              trimmedLine.startsWith('//') ||
+              trimmedLine.startsWith('/*') ||
+              trimmedLine.startsWith('#') ||
+              trimmedLine.startsWith('--') ||
+              trimmedLine.startsWith('<!--')
+            )
+          }).length
+          totalComments += commentLines
+
+          // Ajustar total de linhas se a opção estiver ativada
+          const effectiveLines = options.ignoreCommentsInTotal ? lines - commentLines : lines
+          totalLines += effectiveLines
+
+          // Calcular complexidade das funções
+          let complexity = 0
+          let complexFunctionName = ''
+          if (options.showComplexFunctions) {
+            const functionMatches = content.match(/function\s+(\w+)\s*\(.*\)\s*{|\w+\s*=\s*\(.*\)\s*=>\s*{|\w+\s*:\s*function\s*\(.*\)\s*{/g)
+            if (functionMatches) {
+              functionMatches.forEach(func => {
+                const funcNameMatch = func.match(/function\s+(\w+)|(\w+)\s*=\s*\(.*\)\s*=>|(\w+)\s*:\s*function/)
+                const funcName = funcNameMatch ? funcNameMatch[1] || funcNameMatch[2] || funcNameMatch[3] : 'Função Anônima'
+                const funcBody = content.substring(content.indexOf(func), content.indexOf('}', content.indexOf(func)) + 1)
+                const controlStructures = (funcBody.match(/if|for|while|switch|case|catch/g) || []).length
+                const funcComplexity = controlStructures + 1 // +1 para a própria função
+                if (funcComplexity > complexity) {
+                  complexity = funcComplexity
+                  complexFunctionName = funcName
+                }
+              })
+            }
+          }
 
           // Detectar linguagem baseada na extensão do arquivo
           const language = languageMap[extension] || 'Outros'
           if (!languageBreakdown[language]) {
             languageBreakdown[language] = 0
           }
-          languageBreakdown[language] += lines
+          languageBreakdown[language] += effectiveLines
 
-          // Calcular complexidade de forma simplificada
-          const complexity = Math.floor(lines / 10) // Exemplo de cálculo de complexidade
-          fileDetails.push({ name: file.name, lines, complexity, type: 'code' })
+          fileDetails.push({ name: file.name, lines: effectiveLines, complexity, type: 'code', complexFunctionName })
         } catch (error) {
           console.error(`Erro ao processar o conteúdo do arquivo: ${file.name}`, error)
           fileDetails.push({ name: file.name, lines: null, complexity: null, type: 'code' })
@@ -202,18 +239,17 @@ const App: React.FC = () => {
 
         processedCount += 1
 
-        // Atualizar resultados quando todos os arquivos forem processados
         if (processedCount === filteredFiles.length) {
           setResults({
             totalLines,
             totalFiles: filteredFiles.length,
+            totalComments,
             languageBreakdown,
             fileDetails,
           })
         }
       }
 
-      // Tratamento de erros na leitura do arquivo
       reader.onerror = () => {
         console.error(`Erro ao ler o arquivo: ${file.name}`)
         fileDetails.push({ name: file.name, lines: null, complexity: null, type: 'code' })
@@ -222,6 +258,7 @@ const App: React.FC = () => {
           setResults({
             totalLines,
             totalFiles: filteredFiles.length,
+            totalComments,
             languageBreakdown,
             fileDetails,
           })

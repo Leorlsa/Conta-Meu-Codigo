@@ -3,8 +3,8 @@
 import React, { useState, useRef } from 'react'
 
 interface AnalysisOptions {
-  ignoreComments: boolean
-  showMostUsedWords: boolean
+  ignoreCommentsInTotal: boolean
+  showComplexFunctions: boolean
   showComplexity: boolean
 }
 
@@ -15,8 +15,8 @@ interface UploadSectionProps {
 const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
   const [files, setFiles] = useState<FileList | null>(null)
   const [options, setOptions] = useState<AnalysisOptions>({
-    ignoreComments: false,
-    showMostUsedWords: false,
+    ignoreCommentsInTotal: false,
+    showComplexFunctions: false,
     showComplexity: false,
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -77,8 +77,8 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
               onChange={() => handleOptionChange(key as keyof AnalysisOptions)}
               className="mr-2 form-checkbox text-cyan-500 rounded focus:ring-cyan-500 focus:ring-offset-black"
             />
-            {key === 'ignoreComments' && 'Ignorar comentários'}
-            {key === 'showMostUsedWords' && 'Exibir palavras mais usadas'}
+            {key === 'ignoreCommentsInTotal' && 'Ignorar comentários no total de linhas'}
+            {key === 'showComplexFunctions' && 'Mostrar funções mais complexas'}
             {key === 'showComplexity' && 'Mostrar complexidade de código'}
           </label>
         ))}

@@ -10,6 +10,7 @@ interface ResultsSectionProps {
   results: {
     totalLines: number
     totalFiles: number
+    totalComments: number
     languageBreakdown: Record<string, number>
     fileDetails: Array<{ name: string; lines: number | null; complexity: number | null; type: 'code' }>
   }
@@ -178,6 +179,21 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
           <p className="text-cyan-400">
             Total de arquivos: <span className="font-bold text-cyan-300">{results.totalFiles}</span>
           </p>
+          <p className="text-cyan-400">
+            Total de comentários: <span className="font-bold text-cyan-300">{results.totalComments}</span>
+          </p>
+        </div>
+        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+          <h3 className="text-xl font-semibold mb-4 text-cyan-300">Funções Mais Complexas</h3>
+          {results.fileDetails
+            .filter(file => file.complexity !== null)
+            .sort((a, b) => (b.complexity || 0) - (a.complexity || 0))
+            .slice(0, 5) // Mostra as 5 funções mais complexas
+            .map((file, index) => (
+              <p key={index} className="text-cyan-400">
+                {file.name} - {file.complexFunctionName}: <span className="font-bold text-cyan-300">Complexidade {file.complexity}</span>
+              </p>
+            ))}
         </div>
         <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
           <h3 className="text-xl font-semibold mb-4 text-cyan-300">Distribuição por Linguagem</h3>
