@@ -6,19 +6,27 @@ import UploadSection from './ui/UploadSection'
 import ResultsSection from './ui/ResultsSection'
 import BackgroundAnimation from './ui/BackgroundAnimation'
 
+interface FileDebugInfo {
+  name: string
+  lines: number | null
+  complexity: number | null
+  type: 'code'
+  debugStatements?: Array<{
+    line: number
+    content: string
+    type: string
+  }>
+}
+
 const App: React.FC = () => {
   const [results, setResults] = useState<{
     totalLines: number
     totalFiles: number
     totalComments: number
     languageBreakdown: Record<string, number>
-    fileDetails: {
-      name: string
-      lines: number | null
-      complexity: number | null
-      type: 'code'
-      complexFunctionName?: string
-    }[]
+    fileDetails: FileDebugInfo[]
+    averageFileSize: number
+    debugStatementsFound: number
   } | null>(null)
 
   const languageMap: Record<string, string> = {
@@ -154,10 +162,81 @@ const App: React.FC = () => {
     })
   }
 
+  // Adicione este objeto com os padrões de debug por linguagem
+  const debugPatterns: Record<string, { pattern: RegExp; type: string }[]> = {
+    'JavaScript': [
+      { pattern: /console\.(log|debug|info|warn|error|trace)\s*\([^)]*\)/g, type: 'Console' },
+      { pattern: /debugger;?/g, type: 'Debugger' }
+    ],
+    'TypeScript': [
+      { pattern: /console\.(log|debug|info|warn|error|trace)\s*\([^)]*\)/g, type: 'Console' },
+      { pattern: /debugger;?/g, type: 'Debugger' }
+    ],
+    'Python': [
+      { pattern: /^\s*print\s*\([^)]*\)/g, type: 'Print' },
+      { pattern: /logging\.(debug|info|warning|error|critical)\s*\([^)]*\)/g, type: 'Logging' },
+      { pattern: /^\s*print\s*["'][^"']*["']/g, type: 'Print String' },
+      { pattern: /^\s*print\s*f["'][^"']*["']/g, type: 'Print F-String' }
+    ],
+    'Java': [
+      { pattern: /System\.out\.(println|print)\s*\([^)]*\)/g, type: 'Print' },
+      { pattern: /Log\.(d|v|i|w|e)\s*\([^)]*\)/g, type: 'Android Log' },
+      { pattern: /Logger\.(debug|info|warning|error)\s*\([^)]*\)/g, type: 'Logger' }
+    ],
+    'PHP': [
+      { pattern: /var_dump\s*\([^)]*\)/g, type: 'Var Dump' },
+      { pattern: /print_r\s*\([^)]*\)/g, type: 'Print R' },
+      { pattern: /error_log\s*\([^)]*\)/g, type: 'Error Log' },
+      { pattern: /^\s*echo\s+[^;]+;/g, type: 'Echo' }
+    ],
+    'Ruby': [
+      { pattern: /^\s*puts\s+.*/g, type: 'Puts' },
+      { pattern: /^\s*p\s+.*/g, type: 'P' },
+      { pattern: /^\s*pp\s+.*/g, type: 'PP' },
+      { pattern: /Rails\.logger\.(debug|info|warn|error)\s*\([^)]*\)/g, type: 'Logger' }
+    ],
+    'Go': [
+      { pattern: /fmt\.Print(ln|f)?\s*\([^)]*\)/g, type: 'Print' },
+      { pattern: /log\.(Printf|Println|Print)\s*\([^)]*\)/g, type: 'Log' }
+    ],
+    'C#': [
+      { pattern: /Console\.(WriteLine|Write)\s*\([^)]*\)/g, type: 'Console' },
+      { pattern: /Debug\.(WriteLine|Write)\s*\([^)]*\)/g, type: 'Debug' },
+      { pattern: /Trace\.(WriteLine|Write)\s*\([^)]*\)/g, type: 'Trace' }
+    ]
+  }
+
+  // Função auxiliar para verificar se a linha é um print de debug
+  const isDebugStatement = (line: string, patterns: { pattern: RegExp; type: string }[]): boolean => {
+    // Ignora linhas que são parte de uma string
+    if (line.trim().startsWith('"') || line.trim().startsWith("'")) {
+      return false;
+    }
+
+    // Ignora linhas que são imports/requires
+    if (line.includes('import ') || line.includes('require(') || line.includes('from ')) {
+      return false;
+    }
+
+    // Ignora linhas que são declarações de variáveis
+    if (line.includes(' = ') && !line.includes('console.') && !line.includes('print(')) {
+      return false;
+    }
+
+    // Ignora linhas que são comentários
+    if (line.trim().startsWith('//') || line.trim().startsWith('#') || line.trim().startsWith('/*')) {
+      return false;
+    }
+
+    return patterns.some(({ pattern }) => pattern.test(line));
+  }
+
   const handleAnalysis = (files: FileList, options: AnalysisOptions) => {
-    const fileDetails: { name: string; lines: number | null; complexity: number | null; type: 'code'; complexFunctionName?: string }[] = []
+    const fileDetails: FileDebugInfo[] = []
     let totalLines = 0
     let totalComments = 0
+    let totalFileSize = 0
+    let totalDebugStatements = 0
     const languageBreakdown: Record<string, number> = {}
     let processedCount = 0
 
@@ -174,6 +253,8 @@ const App: React.FC = () => {
         totalComments: 0,
         languageBreakdown: {},
         fileDetails: [],
+        averageFileSize: 0,
+        debugStatementsFound: 0
       })
       return
     }
@@ -185,7 +266,36 @@ const App: React.FC = () => {
       reader.onload = (event) => {
         try {
           const content = event.target?.result as string
-          const lines = content.split('\n').length
+          const lines = content.split('\n')
+          totalFileSize += content.length
+
+          // Detectar declarações de debug
+          const debugStatements: Array<{ line: number; content: string; type: string }> = []
+          if (options.detectDebugStatements) {
+            const language = languageMap[extension] || 'Outros'
+            const patterns = debugPatterns[language] || []
+
+            lines.forEach((line, index) => {
+              if (options.detectDebugStatements) {
+                const language = languageMap[extension] || 'Outros'
+                const patterns = debugPatterns[language] || []
+
+                if (isDebugStatement(line, patterns)) {
+                  patterns.forEach(({ pattern, type }) => {
+                    const matches = line.match(pattern)
+                    if (matches) {
+                      debugStatements.push({
+                        line: index + 1,
+                        content: line.trim(),
+                        type
+                      })
+                      totalDebugStatements++
+                    }
+                  })
+                }
+              }
+            })
+          }
 
           // Contar comentários
           const commentLines = content.split('\n').filter(line => {
@@ -201,28 +311,8 @@ const App: React.FC = () => {
           totalComments += commentLines
 
           // Ajustar total de linhas se a opção estiver ativada
-          const effectiveLines = options.ignoreCommentsInTotal ? lines - commentLines : lines
+          const effectiveLines = options.ignoreCommentsInTotal ? lines.length - commentLines : lines.length
           totalLines += effectiveLines
-
-          // Calcular complexidade das funções
-          let complexity = 0
-          let complexFunctionName = ''
-          if (options.showComplexFunctions) {
-            const functionMatches = content.match(/function\s+(\w+)\s*\(.*\)\s*{|\w+\s*=\s*\(.*\)\s*=>\s*{|\w+\s*:\s*function\s*\(.*\)\s*{/g)
-            if (functionMatches) {
-              functionMatches.forEach(func => {
-                const funcNameMatch = func.match(/function\s+(\w+)|(\w+)\s*=\s*\(.*\)\s*=>|(\w+)\s*:\s*function/)
-                const funcName = funcNameMatch ? funcNameMatch[1] || funcNameMatch[2] || funcNameMatch[3] : 'Função Anônima'
-                const funcBody = content.substring(content.indexOf(func), content.indexOf('}', content.indexOf(func)) + 1)
-                const controlStructures = (funcBody.match(/if|for|while|switch|case|catch/g) || []).length
-                const funcComplexity = controlStructures + 1 // +1 para a própria função
-                if (funcComplexity > complexity) {
-                  complexity = funcComplexity
-                  complexFunctionName = funcName
-                }
-              })
-            }
-          }
 
           // Detectar linguagem baseada na extensão do arquivo
           const language = languageMap[extension] || 'Outros'
@@ -231,7 +321,13 @@ const App: React.FC = () => {
           }
           languageBreakdown[language] += effectiveLines
 
-          fileDetails.push({ name: file.name, lines: effectiveLines, complexity, type: 'code', complexFunctionName })
+          fileDetails.push({
+            name: file.name,
+            lines: effectiveLines,
+            complexity: null,
+            type: 'code',
+            debugStatements: debugStatements.length > 0 ? debugStatements : undefined
+          })
         } catch (error) {
           console.error(`Erro ao processar o conteúdo do arquivo: ${file.name}`, error)
           fileDetails.push({ name: file.name, lines: null, complexity: null, type: 'code' })
@@ -240,12 +336,15 @@ const App: React.FC = () => {
         processedCount += 1
 
         if (processedCount === filteredFiles.length) {
+          const averageFileSize = totalFileSize / filteredFiles.length
           setResults({
             totalLines,
             totalFiles: filteredFiles.length,
             totalComments,
             languageBreakdown,
             fileDetails,
+            averageFileSize,
+            debugStatementsFound: totalDebugStatements
           })
         }
       }
@@ -255,12 +354,15 @@ const App: React.FC = () => {
         fileDetails.push({ name: file.name, lines: null, complexity: null, type: 'code' })
         processedCount += 1
         if (processedCount === filteredFiles.length) {
+          const averageFileSize = totalFileSize / filteredFiles.length
           setResults({
             totalLines,
             totalFiles: filteredFiles.length,
             totalComments,
             languageBreakdown,
             fileDetails,
+            averageFileSize,
+            debugStatementsFound: totalDebugStatements
           })
         }
       }

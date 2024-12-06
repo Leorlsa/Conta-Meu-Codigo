@@ -1,6 +1,6 @@
 /* eslint-disable */
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Bar, Pie } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js'
 
@@ -12,7 +12,18 @@ interface ResultsSectionProps {
     totalFiles: number
     totalComments: number
     languageBreakdown: Record<string, number>
-    fileDetails: Array<{ name: string; lines: number | null; complexity: number | null; type: 'code' }>
+    fileDetails: Array<{
+      name: string
+      lines: number | null
+      type: 'code'
+      debugStatements?: Array<{
+        line: number
+        content: string
+        type: string
+      }>
+    }>
+    averageFileSize: number
+    debugStatementsFound: number
   }
 }
 
@@ -142,85 +153,186 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top' as const,
         labels: {
           color: 'rgb(103, 232, 249)',
+          padding: 20,
+          font: {
+            size: 12
+          }
         },
       },
       title: {
         display: true,
         text: 'Detalhes por Arquivo',
         color: 'rgb(103, 232, 249)',
+        font: {
+          size: 16,
+          weight: 'bold'
+        },
+        padding: {
+          top: 10,
+          bottom: 20
+        }
       },
     },
     scales: {
       x: {
-        ticks: { color: 'rgb(103, 232, 249)' },
-        grid: { color: 'rgba(103, 232, 249, 0.1)' },
+        ticks: {
+          color: 'rgb(103, 232, 249)',
+          maxRotation: 45,
+          minRotation: 45,
+          font: {
+            size: 11
+          }
+        },
+        grid: {
+          color: 'rgba(103, 232, 249, 0.1)',
+          drawBorder: false
+        }
       },
       y: {
-        ticks: { color: 'rgb(103, 232, 249)' },
-        grid: { color: 'rgba(103, 232, 249, 0.1)' },
+        ticks: {
+          color: 'rgb(103, 232, 249)',
+          font: {
+            size: 12
+          }
+        },
+        grid: {
+          color: 'rgba(103, 232, 249, 0.1)',
+          drawBorder: false
+        }
       },
     },
   }
 
+  const [showFunctionCode, setShowFunctionCode] = useState<{ [key: string]: boolean }>({});
+
+  const toggleFunctionCode = (fileName: string) => {
+    setShowFunctionCode(prev => ({ ...prev, [fileName]: !prev[fileName] }));
+  };
+
   return (
     <section className="bg-black bg-opacity/50 backdrop-blur-lg rounded-lg p-6 shadow-lg border border-cyan-800">
       <h2 className="text-2xl font-semibold mb-6 text-cyan-400">Resultados da Análise</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+      {/* Estatísticas Gerais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
-          <h3 className="text-xl font-semibold mb-4 text-cyan-300">Estatísticas Gerais</h3>
-          <p className="text-cyan-400">
-            Total de linhas: <span className="font-bold text-cyan-300">{results.totalLines}</span>
-          </p>
-          <p className="text-cyan-400">
-            Total de arquivos: <span className="font-bold text-cyan-300">{results.totalFiles}</span>
-          </p>
-          <p className="text-cyan-400">
-            Total de comentários: <span className="font-bold text-cyan-300">{results.totalComments}</span>
-          </p>
+          <h4 className="text-lg font-semibold mb-2 text-cyan-300">Total de Linhas</h4>
+          <p className="text-2xl font-bold text-cyan-400">{results.totalLines}</p>
         </div>
         <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
-          <h3 className="text-xl font-semibold mb-4 text-cyan-300">Funções Mais Complexas</h3>
-          {results.fileDetails
-            .filter(file => file.complexity !== null)
-            .sort((a, b) => (b.complexity || 0) - (a.complexity || 0))
-            .slice(0, 5) // Mostra as 5 funções mais complexas
-            .map((file, index) => (
-              <p key={index} className="text-cyan-400">
-                {file.name} - {file.complexFunctionName}: <span className="font-bold text-cyan-300">Complexidade {file.complexity}</span>
-              </p>
-            ))}
+          <h4 className="text-lg font-semibold mb-2 text-cyan-300">Total de Arquivos</h4>
+          <p className="text-2xl font-bold text-cyan-400">{results.totalFiles}</p>
         </div>
         <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
-          <h3 className="text-xl font-semibold mb-4 text-cyan-300">Distribuição por Linguagem</h3>
-          {validLanguages.length > 0 ? (
-            <Pie data={languageData} options={chartOptions} />
-          ) : (
-            <p className="text-cyan-400">Nenhuma linguagem com linhas de código encontrada.</p>
-          )}
+          <h4 className="text-lg font-semibold mb-2 text-cyan-300">Total de Comentários</h4>
+          <p className="text-2xl font-bold text-cyan-400">{results.totalComments}</p>
         </div>
-        <div className="md:col-span-2 bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
-          <h3 className="text-xl font-semibold mb-4 text-cyan-300">Detalhes por Arquivo</h3>
-          {validFileDetails.length > 0 ? (
-            <Bar data={fileData} options={chartOptions} />
-          ) : (
-            <p className="text-cyan-400">Nenhum arquivo com linhas de código encontrado.</p>
-          )}
+        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+          <h4 className="text-lg font-semibold mb-2 text-cyan-300">Tamanho Médio</h4>
+          <p className="text-2xl font-bold text-cyan-400">{(results.averageFileSize / 1024).toFixed(2)} KB</p>
         </div>
       </div>
-      <button
-        onClick={() => {
-          // Implementar lógica para download dos resultados
-          console.log('Download dos resultados')
-        }}
-        className="mt-8 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-2 px-6 rounded-full transition-all hover:from-cyan-600 hover:to-blue-600 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity/50 shadow-lg hover:shadow-cyan-500/50"
-      >
-        Baixar Resultados (JSON/PNG)
-      </button>
+
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+          <h3 className="text-xl font-semibold mb-4 text-cyan-300">Distribuição por Linguagem</h3>
+          <div className="h-[300px]">
+            {validLanguages.length > 0 ? (
+              <Pie data={languageData} options={chartOptions} />
+            ) : (
+              <p className="text-cyan-400">Nenhuma linguagem com linhas de código encontrada.</p>
+            )}
+          </div>
+        </div>
+        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+          <h3 className="text-xl font-semibold mb-4 text-cyan-300">Detalhes por Arquivo</h3>
+          <div className="h-[400px]">
+            {validFileDetails.length > 0 ? (
+              <Bar
+                data={fileData}
+                options={{
+                  ...chartOptions,
+                  indexAxis: validFileDetails.length > 10 ? 'y' : 'x',
+                  scales: {
+                    ...chartOptions.scales,
+                    x: {
+                      ...chartOptions.scales.x,
+                      ticks: {
+                        ...chartOptions.scales.x.ticks,
+                        maxRotation: validFileDetails.length > 10 ? 0 : 45,
+                      }
+                    }
+                  }
+                }}
+              />
+            ) : (
+              <p className="text-cyan-400">Nenhum arquivo com linhas de código encontrado.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Debug Statements */}
+      {results.debugStatementsFound > 0 && (
+        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-semibold text-cyan-300">
+              Logs/Prints Encontrados
+            </h3>
+            <span className="bg-cyan-700 text-cyan-100 px-3 py-1 rounded-full text-sm">
+              {results.debugStatementsFound} encontrados
+            </span>
+          </div>
+
+          <div className="space-y-4">
+            {results.fileDetails
+              .filter(file => file.debugStatements && file.debugStatements.length > 0)
+              .map((file, index) => (
+                <div key={index} className="border-t border-cyan-700 pt-4 first:border-t-0 first:pt-0">
+                  <h4 className="text-cyan-400 font-semibold flex items-center gap-2">
+                    <span>{file.name}</span>
+                    <span className="text-sm bg-cyan-800 px-2 py-0.5 rounded">
+                      {file.debugStatements?.length} logs
+                    </span>
+                  </h4>
+                  <ul className="mt-2 space-y-2">
+                    {file.debugStatements?.map((debug, idx) => (
+                      <li key={idx} className="text-cyan-300 flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-cyan-500">Linha {debug.line}</span>
+                          <span className="text-cyan-400 bg-cyan-800 px-2 rounded">{debug.type}</span>
+                        </div>
+                        <code className="text-cyan-200 bg-cyan-900/50 px-3 py-1.5 rounded block overflow-x-auto">
+                          {debug.content}
+                        </code>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Botão de Download */}
+      <div className="mt-8 flex justify-end">
+        <button
+          onClick={() => {
+            // Implementar lógica para download dos resultados
+            console.log('Download dos resultados')
+          }}
+          className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-2 px-6 rounded-full transition-all hover:from-cyan-600 hover:to-blue-600 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity/50 shadow-lg hover:shadow-cyan-500/50"
+        >
+          Baixar Resultados
+        </button>
+      </div>
     </section>
   )
 }
