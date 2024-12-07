@@ -29,6 +29,9 @@ const App: React.FC = () => {
     debugStatementsFound: number
   } | null>(null)
 
+  // Adicione este estado para controlar a chave de animação
+  const [animationKey, setAnimationKey] = useState(0)
+
   const languageMap: Record<string, string> = {
     js: 'JavaScript',
     ts: 'TypeScript',
@@ -232,6 +235,9 @@ const App: React.FC = () => {
   }
 
   const handleAnalysis = (files: FileList, options: AnalysisOptions) => {
+    // Incrementa a chave de animação para forçar a re-renderização
+    setAnimationKey(prev => prev + 1)
+
     const fileDetails: FileDebugInfo[] = []
     let totalLines = 0
     let totalComments = 0
@@ -382,7 +388,7 @@ const App: React.FC = () => {
         <Header />
         <main className="container mx-auto px-4 py-8">
           <UploadSection onAnalyze={handleAnalysis} />
-          {results && <ResultsSection results={results} />}
+          {results && <ResultsSection key={animationKey} results={results} />}
         </main>
       </div>
     </div>
