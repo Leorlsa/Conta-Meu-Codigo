@@ -1,81 +1,43 @@
-![reactjs-vite-tailwindcss-boilerplate](https://user-images.githubusercontent.com/16243531/217138979-b854309c-4742-4275-a705-f9fec5158217.jpg)
+# Conta Meu Código 🚀
 
-# React Tailwindcss Boilerplate build with Vite
+![Logo do Projeto](public/fav.png)
 
-This is a boilerplate build with Vite, React 18, TypeScript, Vitest, Testing Library, TailwindCSS 3, Eslint and Prettier.
+## 💭 Sobre o Projeto
 
-## What is inside?
+Este projeto nasceu de uma simples curiosidade: "Quantas linhas de código eu realmente escrevi no meu projeto?". Cansado de contar manualmente e ignorar arquivos de bibliotecas, decidi criar uma ferramenta que fizesse isso por mim.
 
-This project uses many tools like:
+O que era para ser um simples contador acabou evoluindo para uma ferramenta visual que me ajuda a entender melhor a composição dos meus projetos.
 
-- [Vite](https://vitejs.dev)
-- [ReactJS](https://reactjs.org)
-- [TypeScript](https://www.typescriptlang.org)
-- [Vitest](https://vitest.dev)
-- [Testing Library](https://testing-library.com)
-- [Tailwindcss](https://tailwindcss.com)
-- [Eslint](https://eslint.org)
-- [Prettier](https://prettier.io)
+## ✨ O que ele faz?
 
-## Getting Started
+- 📊 **Conta linhas de código** (ignorando node_modules e outras libs)
+- 🎨 **Identifica linguagens** usadas no projeto
+- 💬 **Separa comentários** do código
+- 📈 **Mostra gráficos** para visualizar melhor a distribuição do código
+- 📁 **Analisa pastas inteiras** de uma vez
 
-### Install
+## 🛠️ Construído com
 
-Create the project.
+Usei algumas tecnologias que já estava estudando:
 
-```bash
-pnpm dlx degit joaopaulomoraes/reactjs-vite-tailwindcss-boilerplate my-app
-```
+- **React** - Porque já estava familiarizado
+- **TypeScript** - Para praticar tipagem
+- **TailwindCSS** - Para estilizar rapidamente
+- **Chart.js** - Para os gráficos bonitinhos
+- **Framer Motion** - Para umas animações legais
+- **Vite** - Porque é rápido demais!
 
-Access the project directory.
+## 🎯 Para que serve?
 
-```bash
-cd my-app
-```
+Principalmente para satisfazer a curiosidade de desenvolvedores que, como eu, querem saber:
+- Quanto código realmente escreveram
+- Quais linguagens mais usam
+- Como está distribuído o código no projeto
 
-Install dependencies.
+## 📝 Licença
 
-```bash
-pnpm install
-```
+Projeto sob licença MIT - pode usar à vontade! 😉
 
-Serve with hot reload at <http://localhost:5173>.
+---
 
-```bash
-pnpm run dev
-```
-
-### Lint
-
-```bash
-pnpm run lint
-```
-
-### Typecheck
-
-```bash
-pnpm run typecheck
-```
-
-### Build
-
-```bash
-pnpm run build
-```
-
-### Test
-
-```bash
-pnpm run test
-```
-
-View and interact with your tests via UI.
-
-```bash
-pnpm run test:ui
-```
-
-## License
-
-This project is licensed under the MIT License.
-# Conta-Meu-Codigo
+⭐️ Feito com ❤️ e muita curiosidade
