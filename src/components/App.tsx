@@ -18,6 +18,13 @@ interface FileDebugInfo {
   }>
 }
 
+// Adicione esta interface antes do componente App
+interface AnalysisOptions {
+  showAverageFileSize: boolean
+  detectDebugStatements: boolean
+  ignoreCommentsInTotal: boolean
+}
+
 const App: React.FC = () => {
   const [results, setResults] = useState<{
     totalLines: number

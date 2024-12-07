@@ -162,7 +162,7 @@ const cardVariants = {
   }
 }
 
-const scrollStyle = {
+const scrollStyle: React.CSSProperties = {
   scrollBehavior: 'smooth',
   overflowY: 'auto',
   height: '100vh',
@@ -223,7 +223,7 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
         color: 'rgb(103, 232, 249)',
         font: {
           size: 16,
-          weight: 'bold'
+          weight: 'bold' as const
         },
         padding: {
           top: 10,
@@ -273,8 +273,8 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
   const debugRef = useRef<HTMLDivElement>(null)
 
   // Refs para os gráficos
-  const pieChartRef = useRef<ChartJS>(null);
-  const barChartRef = useRef<ChartJS>(null);
+  const pieChartRef = useRef<ChartJS<"pie">>(null);
+  const barChartRef = useRef<ChartJS<"bar">>(null);
 
   const handleDownload = (type: 'json' | 'png') => {
     if (type === 'json') {
