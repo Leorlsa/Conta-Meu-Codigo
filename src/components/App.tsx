@@ -267,7 +267,11 @@ const App: React.FC = () => {
         try {
           const content = event.target?.result as string
           const lines = content.split('\n')
-          totalFileSize += content.length
+
+          // Só calcula o tamanho do arquivo se a opção estiver ativada
+          if (options.showAverageFileSize) {
+            totalFileSize += content.length
+          }
 
           // Detectar declarações de debug
           const debugStatements: Array<{ line: number; content: string; type: string }> = []
@@ -336,14 +340,14 @@ const App: React.FC = () => {
         processedCount += 1
 
         if (processedCount === filteredFiles.length) {
-          const averageFileSize = totalFileSize / filteredFiles.length
           setResults({
             totalLines,
             totalFiles: filteredFiles.length,
             totalComments,
             languageBreakdown,
             fileDetails,
-            averageFileSize,
+            // Só inclui o tamanho médio se a opção estiver ativada
+            averageFileSize: options.showAverageFileSize ? totalFileSize / filteredFiles.length : 0,
             debugStatementsFound: totalDebugStatements
           })
         }
@@ -354,14 +358,14 @@ const App: React.FC = () => {
         fileDetails.push({ name: file.name, lines: null, complexity: null, type: 'code' })
         processedCount += 1
         if (processedCount === filteredFiles.length) {
-          const averageFileSize = totalFileSize / filteredFiles.length
           setResults({
             totalLines,
             totalFiles: filteredFiles.length,
             totalComments,
             languageBreakdown,
             fileDetails,
-            averageFileSize,
+            // Só inclui o tamanho médio se a opção estiver ativada
+            averageFileSize: options.showAverageFileSize ? totalFileSize / filteredFiles.length : 0,
             debugStatementsFound: totalDebugStatements
           })
         }

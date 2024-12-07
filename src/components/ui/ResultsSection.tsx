@@ -221,7 +221,7 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
       <h2 className="text-2xl font-semibold mb-6 text-cyan-400">Resultados da Análise</h2>
 
       {/* Estatísticas Gerais com Tooltips */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${results.averageFileSize ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 mb-8`}>
         <div
           className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
           data-tooltip-id="tooltip-total-lines"
@@ -255,16 +255,18 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
           </ReactTooltip>
         </div>
 
-        <div
-          className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
-          data-tooltip-id="tooltip-avg-size"
-        >
-          <h4 className="text-lg font-semibold mb-2 text-cyan-300">Tamanho Médio</h4>
-          <p className="text-2xl font-bold text-cyan-400">{(results.averageFileSize / 1024).toFixed(2)} KB</p>
-          <ReactTooltip id="tooltip-avg-size">
-            Tamanho médio dos arquivos analisados em kilobytes
-          </ReactTooltip>
-        </div>
+        {results.averageFileSize > 0 && (
+          <div
+            className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
+            data-tooltip-id="tooltip-avg-size"
+          >
+            <h4 className="text-lg font-semibold mb-2 text-cyan-300">Tamanho Médio</h4>
+            <p className="text-2xl font-bold text-cyan-400">{(results.averageFileSize / 1024).toFixed(2)} KB</p>
+            <ReactTooltip id="tooltip-avg-size">
+              Tamanho médio dos arquivos analisados em kilobytes
+            </ReactTooltip>
+          </div>
+        )}
       </div>
 
       {/* Gráficos */}
