@@ -272,6 +272,54 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
   const chartsRef = useRef<HTMLDivElement>(null)
   const debugRef = useRef<HTMLDivElement>(null)
 
+  // Refs para os gráficos
+  const pieChartRef = useRef<ChartJS>(null);
+  const barChartRef = useRef<ChartJS>(null);
+
+  const handleDownload = (type: 'json' | 'png') => {
+    if (type === 'json') {
+      // Preparar dados para JSON
+      const jsonData = {
+        totalLines: results.totalLines,
+        totalFiles: results.totalFiles,
+        totalComments: results.totalComments,
+        languageBreakdown: results.languageBreakdown,
+        fileDetails: results.fileDetails,
+        averageFileSize: results.averageFileSize,
+        debugStatementsFound: results.debugStatementsFound,
+        exportDate: new Date().toISOString()
+      };
+
+      // Criar e baixar arquivo JSON
+      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `code-analysis-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else if (type === 'png') {
+      // Baixar gráficos como PNG
+      const downloadChart = (chartRef: React.RefObject<ChartJS>, filename: string) => {
+        if (chartRef.current) {
+          const url = chartRef.current.toBase64Image('image/png', 1.0);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+      };
+
+      // Baixar ambos os gráficos
+      downloadChart(pieChartRef, `language-distribution-${new Date().toISOString().split('T')[0]}.png`);
+      downloadChart(barChartRef, `file-details-${new Date().toISOString().split('T')[0]}.png`);
+    }
+  };
+
   useEffect(() => {
     const sections = [
       { ref: statsRef, delay: 400 },
@@ -373,7 +421,7 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
           <h3 className="text-xl font-semibold mb-4 text-cyan-300">Distribuição por Linguagem</h3>
           <div className="h-[300px]">
             {validLanguages.length > 0 ? (
-              <Pie data={languageData} options={chartOptions} />
+              <Pie data={languageData} options={chartOptions} ref={pieChartRef} />
             ) : (
               <p className="text-cyan-400">Nenhuma linguagem com linhas de código encontrada.</p>
             )}
@@ -402,6 +450,7 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
                     }
                   }
                 }}
+                ref={barChartRef}
               />
             ) : (
               <p className="text-cyan-400">Nenhum arquivo com linhas de código encontrado.</p>
@@ -459,16 +508,25 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
       {/* Botão de Download */}
       <motion.div
         variants={itemVariants}
-        className="mt-8 flex justify-end"
+        className="mt-8 flex justify-end gap-4"
       >
         <button
-          onClick={() => {
-            // Implementar lógica para download dos resultados
-            console.log('Download dos resultados')
-          }}
-          className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-2 px-6 rounded-full transition-all hover:from-cyan-600 hover:to-blue-600 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity/50 shadow-lg hover:shadow-cyan-500/50"
+          onClick={() => handleDownload('json')}
+          className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-2 px-6 rounded-full transition-all hover:from-cyan-600 hover:to-blue-600 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-50 shadow-lg hover:shadow-cyan-500/50 flex items-center gap-2"
         >
-          Baixar Resultados
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+          JSON
+        </button>
+        <button
+          onClick={() => handleDownload('png')}
+          className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-2 px-6 rounded-full transition-all hover:from-cyan-600 hover:to-blue-600 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-50 shadow-lg hover:shadow-cyan-500/50 flex items-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+          </svg>
+          Gráficos PNG
         </button>
       </motion.div>
     </motion.section>
@@ -476,3 +534,4 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
 }
 
 export default ResultsSection
+

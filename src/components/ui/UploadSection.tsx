@@ -96,37 +96,49 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
           {error}
         </div>
       )}
-      <div className="mb-4 space-y-2">
+      <div className="mb-4 space-y-4">
         {Object.entries(options).map(([key, value]) => (
-          <div key={key} className="flex items-center">
-            <label className="flex items-center text-cyan-300">
-              <input
-                type="checkbox"
-                checked={value}
-                onChange={() => handleOptionChange(key as keyof AnalysisOptions)}
-                className="mr-2 form-checkbox text-cyan-500 rounded focus:ring-cyan-500 focus:ring-offset-black"
-                disabled={isAnalyzing}
-              />
-              {key === 'ignoreCommentsInTotal' && 'Ignorar comentários no total de linhas'}
-              {key === 'showAverageFileSize' && 'Mostrar tamanho médio dos arquivos'}
-              {key === 'detectDebugStatements' && 'Detectar logs/prints esquecidos'}
-            </label>
-            <button
-              data-tooltip-id={`tooltip-${key}`}
-              className="ml-2 text-cyan-500 hover:text-cyan-400"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-            </button>
-            <Tooltip id={`tooltip-${key}`}>
-              {key === 'ignoreCommentsInTotal' &&
-                'Exclui linhas de comentários da contagem total de linhas de código'}
-              {key === 'showAverageFileSize' &&
-                'Calcula e exibe o tamanho médio dos arquivos analisados'}
-              {key === 'detectDebugStatements' &&
-                'Identifica declarações de debug como console.log, print, etc.'}
-            </Tooltip>
+          <div key={key} className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={value}
+                  onChange={() => handleOptionChange(key as keyof AnalysisOptions)}
+                  className="sr-only peer"
+                  disabled={isAnalyzing}
+                />
+                <div className="w-11 h-6 bg-cyan-900/50 rounded-full peer
+                  peer-checked:after:translate-x-full peer-checked:after:border-white
+                  after:content-[''] after:absolute after:top-[2px] after:left-[2px]
+                  after:bg-cyan-300 after:rounded-full after:h-5 after:w-5
+                  after:transition-all peer-checked:bg-gradient-to-r from-cyan-500 to-blue-500
+                  peer-disabled:opacity-50 peer-disabled:cursor-not-allowed
+                  after:shadow-lg hover:after:scale-95">
+                </div>
+              </label>
+              <span className="text-cyan-300 select-none">
+                {key === 'ignoreCommentsInTotal' && 'Ignorar comentários no total de linhas'}
+                {key === 'showAverageFileSize' && 'Mostrar tamanho médio dos arquivos'}
+                {key === 'detectDebugStatements' && 'Detectar logs/prints esquecidos'}
+              </span>
+              <button
+                data-tooltip-id={`tooltip-${key}`}
+                className="text-cyan-500 hover:text-cyan-400 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </button>
+              <Tooltip id={`tooltip-${key}`} place="right">
+                {key === 'ignoreCommentsInTotal' &&
+                  'Exclui linhas de comentários da contagem total de linhas de código'}
+                {key === 'showAverageFileSize' &&
+                  'Calcula e exibe o tamanho médio dos arquivos analisados'}
+                {key === 'detectDebugStatements' &&
+                  'Identifica declarações de debug como console.log, print, etc.'}
+              </Tooltip>
+            </div>
           </div>
         ))}
       </div>
