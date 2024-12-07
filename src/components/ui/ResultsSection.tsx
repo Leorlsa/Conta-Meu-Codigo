@@ -1,9 +1,10 @@
 /* eslint-disable */
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Bar, Pie } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js'
 import { Tooltip as ReactTooltip } from 'react-tooltip'
+import { motion } from 'framer-motion'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title)
 
@@ -117,6 +118,56 @@ const languageColors: Record<string, string> = {
   Outros: 'rgba(128, 128, 128, 0.8)',
 }
 
+// Adicione estas configurações de animação
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.4,
+      delayChildren: 0.2
+    }
+  }
+}
+
+const itemVariants = {
+  hidden: {
+    opacity: 0,
+    y: 50
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.8,
+      ease: "easeOut"
+    }
+  }
+}
+
+const cardVariants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.8,
+    y: 30
+  },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut"
+    }
+  }
+}
+
+const scrollStyle = {
+  scrollBehavior: 'smooth',
+  overflowY: 'auto',
+  height: '100vh',
+  padding: '2rem'
+}
 
 const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
   console.log('Dados recebidos pelo ResultsSection:', results)
@@ -216,13 +267,50 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
     setShowFunctionCode(prev => ({ ...prev, [fileName]: !prev[fileName] }));
   };
 
-  return (
-    <section className="bg-black bg-opacity/50 backdrop-blur-lg rounded-lg p-6 shadow-lg border border-cyan-800">
-      <h2 className="text-2xl font-semibold mb-6 text-cyan-400">Resultados da Análise</h2>
+  // Refs para cada seção
+  const statsRef = useRef<HTMLDivElement>(null)
+  const chartsRef = useRef<HTMLDivElement>(null)
+  const debugRef = useRef<HTMLDivElement>(null)
 
-      {/* Estatísticas Gerais com Tooltips */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 ${results.averageFileSize ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 mb-8`}>
-        <div
+  useEffect(() => {
+    const sections = [
+      { ref: statsRef, delay: 400 },
+      { ref: chartsRef, delay: 800 },
+      { ref: debugRef, delay: 1200 }
+    ]
+
+    sections.forEach(({ ref, delay }) => {
+      if (ref.current) {
+        setTimeout(() => {
+          ref.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          })
+        }, delay)
+      }
+    })
+  }, [])
+
+  return (
+    <motion.section
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="bg-black bg-opacity/50 backdrop-blur-lg rounded-lg p-6 shadow-lg border border-cyan-800"
+      style={scrollStyle}
+    >
+      <motion.h2 variants={itemVariants} className="text-2xl font-semibold mb-6 text-cyan-400">
+        Resultados da Análise
+      </motion.h2>
+
+      {/* Estatísticas Gerais */}
+      <motion.div
+        ref={statsRef}
+        variants={itemVariants}
+        className={`grid grid-cols-1 md:grid-cols-2 ${results.averageFileSize ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4 mb-8`}
+      >
+        <motion.div
+          variants={cardVariants}
           className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
           data-tooltip-id="tooltip-total-lines"
         >
@@ -231,9 +319,10 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
           <ReactTooltip id="tooltip-total-lines">
             Número total de linhas de código encontradas em todos os arquivos analisados
           </ReactTooltip>
-        </div>
+        </motion.div>
 
-        <div
+        <motion.div
+          variants={cardVariants}
           className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
           data-tooltip-id="tooltip-total-files"
         >
@@ -242,9 +331,10 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
           <ReactTooltip id="tooltip-total-files">
             Quantidade total de arquivos analisados no projeto
           </ReactTooltip>
-        </div>
+        </motion.div>
 
-        <div
+        <motion.div
+          variants={cardVariants}
           className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
           data-tooltip-id="tooltip-total-comments"
         >
@@ -253,10 +343,11 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
           <ReactTooltip id="tooltip-total-comments">
             Número total de linhas de comentários encontradas no código
           </ReactTooltip>
-        </div>
+        </motion.div>
 
         {results.averageFileSize > 0 && (
-          <div
+          <motion.div
+            variants={cardVariants}
             className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
             data-tooltip-id="tooltip-avg-size"
           >
@@ -265,13 +356,20 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
             <ReactTooltip id="tooltip-avg-size">
               Tamanho médio dos arquivos analisados em kilobytes
             </ReactTooltip>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
       {/* Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+      <motion.div
+        ref={chartsRef}
+        variants={itemVariants}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
+      >
+        <motion.div
+          variants={itemVariants}
+          className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
+        >
           <h3 className="text-xl font-semibold mb-4 text-cyan-300">Distribuição por Linguagem</h3>
           <div className="h-[300px]">
             {validLanguages.length > 0 ? (
@@ -280,8 +378,11 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
               <p className="text-cyan-400">Nenhuma linguagem com linhas de código encontrada.</p>
             )}
           </div>
-        </div>
-        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+        </motion.div>
+        <motion.div
+          variants={itemVariants}
+          className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
+        >
           <h3 className="text-xl font-semibold mb-4 text-cyan-300">Detalhes por Arquivo</h3>
           <div className="h-[400px]">
             {validFileDetails.length > 0 ? (
@@ -306,12 +407,16 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
               <p className="text-cyan-400">Nenhum arquivo com linhas de código encontrado.</p>
             )}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Debug Statements */}
       {results.debugStatementsFound > 0 && (
-        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+        <motion.div
+          ref={debugRef}
+          variants={itemVariants}
+          className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
+        >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-semibold text-cyan-300">
               Logs/Prints Encontrados
@@ -348,11 +453,14 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
                 </div>
               ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Botão de Download */}
-      <div className="mt-8 flex justify-end">
+      <motion.div
+        variants={itemVariants}
+        className="mt-8 flex justify-end"
+      >
         <button
           onClick={() => {
             // Implementar lógica para download dos resultados
@@ -362,8 +470,8 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
         >
           Baixar Resultados
         </button>
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   )
 }
 
