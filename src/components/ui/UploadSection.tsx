@@ -1,6 +1,7 @@
 /* eslint-disable */
 
 import React, { useState, useRef } from 'react'
+import { Tooltip } from 'react-tooltip'
 
 interface AnalysisOptions {
   ignoreCommentsInTotal: boolean
@@ -14,6 +15,8 @@ interface UploadSectionProps {
 
 const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
   const [files, setFiles] = useState<FileList | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [options, setOptions] = useState<AnalysisOptions>({
     ignoreCommentsInTotal: false,
     showAverageFileSize: false,
@@ -38,9 +41,18 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
     setOptions((prev) => ({ ...prev, [option]: !prev[option] }))
   }
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (files) {
-      onAnalyze(files, options)
+      setIsAnalyzing(true)
+      setError(null)
+      try {
+        await onAnalyze(files, options)
+      } catch (err) {
+        setError('Ocorreu um erro durante a análise. Por favor, tente novamente.')
+        console.error(err)
+      } finally {
+        setIsAnalyzing(false)
+      }
     }
   }
 
@@ -49,15 +61,25 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
       <h2 className="text-2xl font-semibold mb-4 text-cyan-400">Contador de Linhas de Código</h2>
       <p className="text-lg text-cyan-300 mb-4">Descubra quantas linhas de código seu projeto tem em segundos.</p>
       <div
-        className="border-2 border-dashed border-cyan-700 rounded-lg p-8 mb-4 text-center cursor-pointer transition-all hover:border-cyan-500 hover:bg-cyan-900 hover:bg-opacity-20"
+        className={`border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-all
+          ${isAnalyzing ? 'border-cyan-400 bg-cyan-900/20' : 'border-cyan-700 hover:border-cyan-500 hover:bg-cyan-900/20'}`}
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !isAnalyzing && fileInputRef.current?.click()}
       >
-        <p className="mb-2 text-cyan-300">Arraste e solte seus arquivos ou clique para selecionar</p>
-        <p className="text-sm text-cyan-500">
-          {files ? `${files.length} arquivo(s) selecionado(s)` : 'Suporta múltiplos arquivos e pastas'}
-        </p>
+        {isAnalyzing ? (
+          <div className="flex flex-col items-center gap-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+            <p className="text-cyan-300">Analisando arquivos...</p>
+          </div>
+        ) : (
+          <>
+            <p className="mb-2 text-cyan-300">Arraste e solte seus arquivos ou clique para selecionar</p>
+            <p className="text-sm text-cyan-500">
+              {files ? `${files.length} arquivo(s) selecionado(s)` : 'Suporta múltiplos arquivos e pastas'}
+            </p>
+          </>
+        )}
         <input
           type="file"
           ref={fileInputRef}
@@ -66,29 +88,69 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
           webkitdirectory=""
           directory=""
           className="hidden"
+          disabled={isAnalyzing}
         />
       </div>
+      {error && (
+        <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-400">
+          {error}
+        </div>
+      )}
       <div className="mb-4 space-y-2">
         {Object.entries(options).map(([key, value]) => (
-          <label key={key} className="flex items-center text-cyan-300">
-            <input
-              type="checkbox"
-              checked={value}
-              onChange={() => handleOptionChange(key as keyof AnalysisOptions)}
-              className="mr-2 form-checkbox text-cyan-500 rounded focus:ring-cyan-500 focus:ring-offset-black"
-            />
-            {key === 'ignoreCommentsInTotal' && 'Ignorar comentários no total de linhas'}
-            {key === 'showAverageFileSize' && 'Mostrar tamanho médio dos arquivos'}
-            {key === 'detectDebugStatements' && 'Detectar logs/prints esquecidos'}
-          </label>
+          <div key={key} className="flex items-center">
+            <label className="flex items-center text-cyan-300">
+              <input
+                type="checkbox"
+                checked={value}
+                onChange={() => handleOptionChange(key as keyof AnalysisOptions)}
+                className="mr-2 form-checkbox text-cyan-500 rounded focus:ring-cyan-500 focus:ring-offset-black"
+                disabled={isAnalyzing}
+              />
+              {key === 'ignoreCommentsInTotal' && 'Ignorar comentários no total de linhas'}
+              {key === 'showAverageFileSize' && 'Mostrar tamanho médio dos arquivos'}
+              {key === 'detectDebugStatements' && 'Detectar logs/prints esquecidos'}
+            </label>
+            <button
+              data-tooltip-id={`tooltip-${key}`}
+              className="ml-2 text-cyan-500 hover:text-cyan-400"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <Tooltip id={`tooltip-${key}`}>
+              {key === 'ignoreCommentsInTotal' &&
+                'Exclui linhas de comentários da contagem total de linhas de código'}
+              {key === 'showAverageFileSize' &&
+                'Calcula e exibe o tamanho médio dos arquivos analisados'}
+              {key === 'detectDebugStatements' &&
+                'Identifica declarações de debug como console.log, print, etc.'}
+            </Tooltip>
+          </div>
         ))}
       </div>
       <button
         onClick={handleAnalyze}
-        className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-2 px-6 rounded-full transition-all hover:from-cyan-600 hover:to-blue-600 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-50 shadow-lg hover:shadow-cyan-500/50"
-        disabled={!files}
+        disabled={!files || isAnalyzing}
+        className={`
+          bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-2 px-6
+          rounded-full transition-all transform focus:outline-none focus:ring-2
+          focus:ring-cyan-500 focus:ring-opacity-50 shadow-lg
+          ${isAnalyzing
+            ? 'opacity-50 cursor-not-allowed'
+            : 'hover:from-cyan-600 hover:to-blue-600 hover:scale-105 hover:shadow-cyan-500/50'
+          }
+        `}
       >
-        Contar Linhas de Código
+        {isAnalyzing ? (
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <span>Analisando...</span>
+          </div>
+        ) : (
+          'Contar Linhas de Código'
+        )}
       </button>
     </section>
   )

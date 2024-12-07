@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Bar, Pie } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js'
+import { Tooltip as ReactTooltip } from 'react-tooltip'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title)
 
@@ -219,23 +220,50 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
     <section className="bg-black bg-opacity/50 backdrop-blur-lg rounded-lg p-6 shadow-lg border border-cyan-800">
       <h2 className="text-2xl font-semibold mb-6 text-cyan-400">Resultados da Análise</h2>
 
-      {/* Estatísticas Gerais */}
+      {/* Estatísticas Gerais com Tooltips */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+        <div
+          className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
+          data-tooltip-id="tooltip-total-lines"
+        >
           <h4 className="text-lg font-semibold mb-2 text-cyan-300">Total de Linhas</h4>
           <p className="text-2xl font-bold text-cyan-400">{results.totalLines}</p>
+          <ReactTooltip id="tooltip-total-lines">
+            Número total de linhas de código encontradas em todos os arquivos analisados
+          </ReactTooltip>
         </div>
-        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+
+        <div
+          className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
+          data-tooltip-id="tooltip-total-files"
+        >
           <h4 className="text-lg font-semibold mb-2 text-cyan-300">Total de Arquivos</h4>
           <p className="text-2xl font-bold text-cyan-400">{results.totalFiles}</p>
+          <ReactTooltip id="tooltip-total-files">
+            Quantidade total de arquivos analisados no projeto
+          </ReactTooltip>
         </div>
-        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+
+        <div
+          className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
+          data-tooltip-id="tooltip-total-comments"
+        >
           <h4 className="text-lg font-semibold mb-2 text-cyan-300">Total de Comentários</h4>
           <p className="text-2xl font-bold text-cyan-400">{results.totalComments}</p>
+          <ReactTooltip id="tooltip-total-comments">
+            Número total de linhas de comentários encontradas no código
+          </ReactTooltip>
         </div>
-        <div className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700">
+
+        <div
+          className="bg-cyan-900 bg-opacity/30 p-4 rounded-lg border border-cyan-700"
+          data-tooltip-id="tooltip-avg-size"
+        >
           <h4 className="text-lg font-semibold mb-2 text-cyan-300">Tamanho Médio</h4>
           <p className="text-2xl font-bold text-cyan-400">{(results.averageFileSize / 1024).toFixed(2)} KB</p>
+          <ReactTooltip id="tooltip-avg-size">
+            Tamanho médio dos arquivos analisados em kilobytes
+          </ReactTooltip>
         </div>
       </div>
 
