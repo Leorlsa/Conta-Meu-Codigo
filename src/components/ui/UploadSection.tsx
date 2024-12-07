@@ -19,6 +19,11 @@ interface CustomInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   directory?: string;
 }
 
+// Crie um componente de input personalizado
+const FileInput = React.forwardRef<HTMLInputElement, CustomInputProps>((props, ref) => (
+  <input {...props} ref={ref} />
+));
+
 const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
   const [files, setFiles] = useState<FileList | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -86,16 +91,16 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
             </p>
           </>
         )}
-        <input
+        <FileInput
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
           multiple
-          {...{webkitdirectory: ""}}
-          {...{directory: ""}}
+          webkitdirectory=""
+          directory=""
           className="hidden"
           disabled={isAnalyzing}
-        /> as CustomInputProps
+        />
       </div>
       {error && (
         <div className="mb-4 p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-400">
