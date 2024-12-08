@@ -53,17 +53,20 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
   }
 
   const handleAnalyze = async () => {
-    if (files) {
-      setIsAnalyzing(true)
-      setError(null)
-      try {
-        await onAnalyze(files, options)
-      } catch (err) {
-        setError('Ocorreu um erro durante a análise. Por favor, tente novamente.')
-        console.error(err)
-      } finally {
-        setIsAnalyzing(false)
-      }
+    if (!files || files.length === 0) {
+      setError('Por favor, selecione pelo menos um arquivo para análise.')
+      return
+    }
+
+    setIsAnalyzing(true)
+    setError(null)
+    try {
+      await onAnalyze(files, options)
+    } catch (err) {
+      setError('Ocorreu um erro durante a análise. Por favor, tente novamente.')
+      console.error(err)
+    } finally {
+      setIsAnalyzing(false)
     }
   }
 
@@ -155,12 +158,12 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
       </div>
       <button
         onClick={handleAnalyze}
-        disabled={!files || isAnalyzing}
+        disabled={!files || files.length === 0 || isAnalyzing}
         className={`
           bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-2 px-6
           rounded-full transition-all transform focus:outline-none focus:ring-2
           focus:ring-cyan-500 focus:ring-opacity-50 shadow-lg
-          ${isAnalyzing
+          ${(!files || files.length === 0 || isAnalyzing)
             ? 'opacity-50 cursor-not-allowed'
             : 'hover:from-cyan-600 hover:to-blue-600 hover:scale-105 hover:shadow-cyan-500/50'
           }
