@@ -29,9 +29,9 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [options, setOptions] = useState<AnalysisOptions>({
-    ignoreCommentsInTotal: false,
-    showAverageFileSize: false,
-    detectDebugStatements: false,
+    ignoreCommentsInTotal: true,
+    showAverageFileSize: true,
+    detectDebugStatements: true,
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
