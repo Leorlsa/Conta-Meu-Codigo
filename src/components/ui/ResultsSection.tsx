@@ -344,7 +344,7 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="bg-black bg-opacity/50 backdrop-blur-lg rounded-lg p-6 shadow-lg border border-cyan-800"
+      className="results-section bg-black bg-opacity/50 backdrop-blur-lg rounded-lg p-6 shadow-lg border border-cyan-800"
       style={scrollStyle}
     >
       <motion.h2 variants={itemVariants} className="text-2xl font-semibold mb-6 text-cyan-400">
@@ -506,9 +506,8 @@ const ResultsSection: React.FC<ResultsSectionProps> = ({ results }) => {
       )}
 
       {/* Botão de Download */}
-      <motion.div
+      <motion.div className="download-section mt-8 flex justify-end gap-4"
         variants={itemVariants}
-        className="mt-8 flex justify-end gap-4"
       >
         <button
           onClick={() => handleDownload('json')}

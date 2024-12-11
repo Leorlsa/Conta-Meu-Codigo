@@ -5,6 +5,7 @@ import Header from './ui/Header'
 import UploadSection from './ui/UploadSection'
 import ResultsSection from './ui/ResultsSection'
 import BackgroundAnimation from './ui/BackgroundAnimation'
+import GuidedTour from './ui/GuidedTour'
 
 interface FileDebugInfo {
   name: string
@@ -391,6 +392,7 @@ const App: React.FC = () => {
   return (
     <div className="relative min-h-screen overflow-hidden bg-black text-cyan-400">
       <BackgroundAnimation />
+      <GuidedTour />
       <div className="relative z-10">
         <Header />
         <main className="container mx-auto px-4 py-8">

@@ -71,9 +71,11 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
   }
 
   return (
-    <section className="backdrop-blur-lg bg-black bg-opacity-50 rounded-lg p-6 mb-8 shadow-lg border border-cyan-800">
-      <h2 className="text-2xl font-semibold mb-4 text-cyan-400">Contador de Linhas de Código</h2>
-      <p className="text-lg text-cyan-300 mb-4">Descubra quantas linhas de código seu projeto tem em segundos.</p>
+    <section className="upload-section backdrop-blur-lg bg-black bg-opacity-50 rounded-lg p-6 mb-8 shadow-lg border border-cyan-800">
+      <h2 className="text-2xl font-semibold mb-4 text-cyan-400">Analisador de Código</h2>
+      <p className="text-lg text-cyan-300 mb-4">
+        Visualize estatísticas <strong>detalhadas</strong> do seu código em segundos
+      </p>
       <div
         className={`border-2 border-dashed rounded-lg p-8 mb-4 text-center cursor-pointer transition-all
           ${isAnalyzing ? 'border-cyan-400 bg-cyan-900/20' : 'border-cyan-700 hover:border-cyan-500 hover:bg-cyan-900/20'}`}
@@ -88,9 +90,9 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
           </div>
         ) : (
           <>
-            <p className="mb-2 text-cyan-300">Arraste e solte seus arquivos ou clique para selecionar</p>
+            <p className="mb-2 text-cyan-300">Arraste seu projeto ou arquivos que você quer analisar aqui</p>
             <p className="text-sm text-cyan-500">
-              {files ? `${files.length} arquivo(s) selecionado(s)` : 'Suporta múltiplos arquivos e pastas'}
+              {files ? `${files.length} arquivo(s) selecionado(s)` : 'Você também pode clicar para selecionar uma pasta'}
             </p>
           </>
         )}
@@ -110,7 +112,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
           {error}
         </div>
       )}
-      <div className="mb-4 space-y-4">
+      <div className="options-section mb-4 space-y-4">
         {Object.entries(options).map(([key, value]) => (
           <div key={key} className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -160,6 +162,7 @@ const UploadSection: React.FC<UploadSectionProps> = ({ onAnalyze }) => {
         onClick={handleAnalyze}
         disabled={!files || files.length === 0 || isAnalyzing}
         className={`
+          analyze-button
           bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-2 px-6
           rounded-full transition-all transform focus:outline-none focus:ring-2
           focus:ring-cyan-500 focus:ring-opacity-50 shadow-lg
